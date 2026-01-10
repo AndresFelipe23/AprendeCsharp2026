@@ -63,6 +63,12 @@ async function bootstrap(): Promise<express.Express> {
       }
     };
 
+    // Registrar la redirección de la raíz a /docs ANTES de app.init()
+    // Esto asegura que tenga prioridad sobre AppController.getHello()
+    expressApp.get('/', (req, res) => {
+      res.redirect('/docs');
+    });
+
     // Registrar el handler ANTES de app.init() para que esté en el stack primero
     // Esto evita que los guards de NestJS lo intercepten
     expressApp.get('/swagger-json', swaggerJsonHandler);
@@ -117,8 +123,7 @@ async function bootstrap(): Promise<express.Express> {
       console.warn('⚠️ Error al cargar Scalar:', error);
     }
 
-    // Redirigir la raíz a /docs
-    app.getHttpAdapter().get('/', (req, res) => res.redirect('/docs'));
+    // La redirección ya está registrada antes de app.init() en expressApp.get('/')
     
     console.log('✅ Aplicación NestJS inicializada correctamente');
     cachedServer = expressApp;
