@@ -46,16 +46,36 @@ async function bootstrap(): Promise<express.Express> {
       }),
     );
 
-    // Ajustar URL base según el entorno (Vercel proporciona VERCEL_URL)
-    const vercelUrl = process.env.VERCEL_URL 
-      ? `https://${process.env.VERCEL_URL}` 
-      : null;
+    // Preparar handler para /swagger-json que se registrará después de crear el documento
+    let swaggerDocument: any = null;
     
-    const baseUrl = vercelUrl || `http://localhost:${process.env.PORT || 3000}`;
+    const swaggerJsonHandler = (req: express.Request, res: express.Response) => {
+      // Asegurar que CORS esté habilitado para este endpoint
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      res.setHeader('Content-Type', 'application/json');
+      
+      if (swaggerDocument) {
+        res.json(swaggerDocument);
+      } else {
+        res.status(503).json({ error: 'Swagger document not ready yet' });
+      }
+    };
 
-    console.log(`📝 URL base configurada: ${baseUrl}`);
+    // Registrar el handler ANTES de app.init() para que esté en el stack primero
+    // Esto evita que los guards de NestJS lo intercepten
+    expressApp.get('/swagger-json', swaggerJsonHandler);
 
-    // Configuración de Swagger/OpenAPI
+    // Manejar OPTIONS para CORS
+    expressApp.options('/swagger-json', (req, res) => {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      res.sendStatus(200);
+    });
+
+    // Configuración de Swagger/OpenAPI (usaremos URL relativa para evitar problemas con Vercel)
     const config = new DocumentBuilder()
       .setTitle('Lenguaje C# API')
       .setDescription('API para la aplicación de aprendizaje del lenguaje C#')
@@ -68,18 +88,19 @@ async function bootstrap(): Promise<express.Express> {
       .addTag('progreso', 'Endpoints relacionados con el progreso del usuario')
       .addTag('auth', 'Endpoints de autenticación')
       .addBearerAuth()
-      .addServer(baseUrl, vercelUrl ? 'Producción' : 'Desarrollo')
+      .addServer('/', 'Producción') // URL relativa funciona en cualquier entorno
       .build();
 
-    const document = SwaggerModule.createDocument(app, config);
+    console.log('✅ Inicializando módulos de NestJS...');
+    await app.init();
 
-    // Exponer el JSON de Swagger
-    app.getHttpAdapter().get('/swagger-json', (req, res) => {
-      res.setHeader('Content-Type', 'application/json');
-      res.json(document);
-    });
+    // Crear el documento de Swagger DESPUÉS de inicializar
+    swaggerDocument = SwaggerModule.createDocument(app, config);
 
-    // Scalar como vista principal
+    // Swagger UI disponible en /swagger
+    SwaggerModule.setup('swagger', app, document);
+
+    // Scalar como vista principal - usar URL relativa para evitar problemas con CORS
     try {
       const { apiReference } = await import('@scalar/express-api-reference');
       app.use(
@@ -87,9 +108,8 @@ async function bootstrap(): Promise<express.Express> {
         apiReference({
           theme: 'default',
           layout: 'modern',
-          spec: {
-            url: `${baseUrl}/swagger-json`,
-          },
+          // Nueva sintaxis sin 'spec.url' - usar 'url' directamente
+          url: '/swagger-json', // URL relativa funciona mejor en Vercel
           withDefaultFonts: true,
         } as any),
       );
@@ -99,12 +119,6 @@ async function bootstrap(): Promise<express.Express> {
 
     // Redirigir la raíz a /docs
     app.getHttpAdapter().get('/', (req, res) => res.redirect('/docs'));
-
-    // Swagger UI disponible en /swagger
-    SwaggerModule.setup('swagger', app, document);
-
-    console.log('✅ Inicializando módulos de NestJS...');
-    await app.init();
     
     console.log('✅ Aplicación NestJS inicializada correctamente');
     cachedServer = expressApp;
