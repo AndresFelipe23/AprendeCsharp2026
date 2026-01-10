@@ -5,11 +5,11 @@ import express from 'express';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
-let cachedServer: express.Express;
+let cachedApp: any;
 
-async function createServer(): Promise<express.Express> {
-  if (cachedServer) {
-    return cachedServer;
+async function createApp() {
+  if (cachedApp) {
+    return cachedApp;
   }
 
   const expressApp = express();
@@ -100,11 +100,12 @@ async function createServer(): Promise<express.Express> {
   SwaggerModule.setup('swagger', app, document);
 
   await app.init();
-  cachedServer = expressApp;
-  return expressApp;
+  cachedApp = app;
+  return app;
 }
 
 export default async function handler(req: express.Request, res: express.Response) {
-  const server = await createServer();
-  server(req, res);
+  const app = await createApp();
+  const expressInstance = app.getHttpAdapter().getInstance();
+  expressInstance(req, res);
 }
