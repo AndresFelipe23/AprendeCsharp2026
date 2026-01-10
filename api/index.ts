@@ -46,9 +46,10 @@ async function bootstrap(): Promise<express.Express> {
       }),
     );
 
-    // Preparar handler para /swagger-json que se registrará después de crear el documento
+    // Variables para los handlers que se crearán después
     let swaggerDocument: any = null;
     
+    // Handler para /swagger-json
     const swaggerJsonHandler = (req: express.Request, res: express.Response) => {
       // Asegurar que CORS esté habilitado para este endpoint
       res.setHeader('Access-Control-Allow-Origin', '*');
@@ -63,23 +64,21 @@ async function bootstrap(): Promise<express.Express> {
       }
     };
 
-    // Registrar la redirección de la raíz a /docs ANTES de app.init()
-    // Esto asegura que tenga prioridad sobre AppController.getHello()
-    expressApp.get('/', (req, res) => {
-      res.redirect('/docs');
-    });
+    // Registrar todas las rutas de documentación ANTES de app.init()
+    // Esto asegura que tengan prioridad sobre las rutas de NestJS
+    
+    // NO registrar la redirección aquí - se registrará después de app.init()
+    // para asegurar que funcione correctamente
 
-    // Registrar el handler ANTES de app.init() para que esté en el stack primero
-    // Esto evita que los guards de NestJS lo intercepten
+    // Registrar /swagger-json ANTES de app.init() para que sea público
     expressApp.get('/swagger-json', swaggerJsonHandler);
-
-    // Manejar OPTIONS para CORS
     expressApp.options('/swagger-json', (req, res) => {
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
       res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
       res.sendStatus(200);
     });
+
 
     // Configuración de Swagger/OpenAPI (usaremos URL relativa para evitar problemas con Vercel)
     const config = new DocumentBuilder()
@@ -103,29 +102,49 @@ async function bootstrap(): Promise<express.Express> {
     // Crear el documento de Swagger DESPUÉS de inicializar
     swaggerDocument = SwaggerModule.createDocument(app, config);
 
-    // Swagger UI disponible en /swagger
+    // Configurar Swagger UI en /swagger usando SwaggerModule
+    // Esto registra automáticamente las rutas en /swagger DESPUÉS de app.init()
     SwaggerModule.setup('swagger', app, swaggerDocument);
+    console.log('✅ Swagger UI configurado en /swagger');
 
-    // Scalar como vista principal - usar URL relativa para evitar problemas con CORS
+    // Configurar Scalar DESPUÉS de crear el documento
+    // IMPORTANTE: Usar app.use() de NestJS en lugar de expressApp.use()
+    // Esto asegura que funcione correctamente con el router de NestJS
     try {
       const { apiReference } = await import('@scalar/express-api-reference');
-      app.use(
-        '/docs',
-        apiReference({
-          theme: 'default',
-          layout: 'modern',
-          // Nueva sintaxis sin 'spec.url' - usar 'url' directamente
-          url: '/swagger-json', // URL relativa funciona mejor en Vercel
-          withDefaultFonts: true,
-        } as any),
-      );
-    } catch (error) {
-      console.warn('⚠️ Error al cargar Scalar:', error);
+      const scalarHandler = apiReference({
+        theme: 'default',
+        layout: 'modern',
+        // Nueva sintaxis sin 'spec.url' - usar 'url' directamente
+        url: '/swagger-json', // URL relativa funciona mejor en Vercel
+        withDefaultFonts: true,
+      } as any);
+      
+      // IMPORTANTE: Usar app.use() de NestJS en lugar de expressApp.use()
+      // Esto asegura que funcione correctamente en Vercel serverless
+      // El adapter de NestJS maneja el registro de middlewares correctamente
+      app.use('/docs', scalarHandler);
+      
+      console.log('✅ Scalar configurado en /docs usando app.use()');
+      console.log('✅ Rutas registradas: /docs, /swagger, /swagger-json');
+    } catch (error: any) {
+      console.error('❌ Error al cargar Scalar:', error);
+      console.error('Stack:', error?.stack);
+      // Si falla Scalar, crear un endpoint simple que muestre un mensaje usando el adapter
+      app.getHttpAdapter().get('/docs', (req, res) => {
+        res.status(500).send('Error al cargar la documentación. Visita /swagger-json para ver el JSON de Swagger.');
+      });
     }
 
-    // La redirección ya está registrada antes de app.init() en expressApp.get('/')
+    // Registrar la redirección de / a /docs DESPUÉS de configurar todas las rutas
+    // Usar el adapter de NestJS para que funcione correctamente
+    app.getHttpAdapter().get('/', (req, res) => {
+      res.redirect(302, '/docs');
+    });
     
     console.log('✅ Aplicación NestJS inicializada correctamente');
+    console.log('✅ Rutas de documentación configuradas: /docs, /swagger, /swagger-json');
+    console.log('✅ Redirección de / a /docs configurada');
     cachedServer = expressApp;
     return expressApp;
   } catch (error: any) {
