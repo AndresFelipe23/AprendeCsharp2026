@@ -95,39 +95,30 @@ async function bootstrap(): Promise<express.Express> {
       res.sendStatus(200);
     });
 
-    // Configurar Scalar DESPUÉS de crear el documento y ANTES de Swagger UI
-    // IMPORTANTE: Registrar directamente en expressApp
-    try {
-      const { apiReference } = await import('@scalar/express-api-reference');
+    // Configurar Scalar manualmente como HTML en /docs
+    // En Vercel serverless, app.use() no funciona correctamente después de init
+    // Por eso servimos el HTML de Scalar directamente
+    expressApp.get('/docs', (req, res) => {
+      res.setHeader('Content-Type', 'text/html');
+      res.send(`
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>API Documentation - Lenguaje C#</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <body>
+    <script
+      id="api-reference"
+      data-url="/swagger-json"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+  </body>
+</html>
+      `);
+    });
 
-      // Registrar Scalar directamente en Express usando expressApp
-      expressApp.use('/docs', apiReference({
-        theme: 'default',
-        layout: 'modern',
-        spec: {
-          content: swaggerDocument,
-        },
-        withDefaultFonts: true,
-      } as any));
-
-      console.log('✅ Scalar configurado en /docs');
-    } catch (error: any) {
-      console.error('❌ Error al cargar Scalar:', error);
-      console.error('Stack:', error?.stack);
-      // Si falla Scalar, crear un endpoint simple que muestre un mensaje
-      expressApp.get('/docs', (req, res) => {
-        res.status(500).send(`
-          <html>
-            <body>
-              <h1>Error al cargar Scalar</h1>
-              <p>${error?.message || 'Unknown error'}</p>
-              <p>Visita <a href="/swagger-json">/swagger-json</a> para ver el JSON de Swagger.</p>
-              <p>O visita <a href="/swagger">/swagger</a> para ver Swagger UI.</p>
-            </body>
-          </html>
-        `);
-      });
-    }
+    console.log('✅ Scalar configurado en /docs');
 
     // Configurar Swagger UI en /swagger usando SwaggerModule
     // Esto registra automáticamente las rutas en /swagger DESPUÉS de Scalar
