@@ -98,7 +98,7 @@ async function bootstrap(): Promise<express.Express> {
     swaggerDocument = SwaggerModule.createDocument(app, config);
 
     // Swagger UI disponible en /swagger
-    SwaggerModule.setup('swagger', app, document);
+    SwaggerModule.setup('swagger', app, swaggerDocument);
 
     // Scalar como vista principal - usar URL relativa para evitar problemas con CORS
     try {
