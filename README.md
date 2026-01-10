@@ -382,6 +382,47 @@ Después de desplegar en Vercel, verifica:
 
 ## 🔧 Solución de Problemas
 
+### Error 500: FUNCTION_INVOCATION_FAILED en Vercel
+**Síntomas**: La función serverless falla con error 500.
+
+**Soluciones**:
+1. **Verifica las variables de entorno en Vercel**:
+   - Ve a tu proyecto en Vercel Dashboard → Settings → Environment Variables
+   - Asegúrate de que todas las variables estén configuradas:
+     - `DB_HOST`
+     - `DB_PORT`
+     - `DB_USERNAME`
+     - `DB_PASSWORD`
+     - `DB_DATABASE`
+     - `DB_ENCRYPT`
+     - `JWT_SECRET`
+     - `JWT_EXPIRES_IN`
+     - `NODE_ENV=production`
+
+2. **Revisa los logs de Vercel**:
+   ```bash
+   vercel logs
+   ```
+   O desde el Dashboard: Deployments → Selecciona el deployment → Functions → Ver logs
+   - Busca errores específicos en los logs
+   - Verifica mensajes de error relacionados con la base de datos
+
+3. **Verifica la conectividad de la base de datos**:
+   - Asegúrate de que tu base de datos SQL Server esté accesible desde internet
+   - Para Azure SQL Database:
+     - Ve a Azure Portal → SQL Server → Firewall settings
+     - Asegúrate de que "Allow Azure services and resources to access this server" esté habilitado
+     - O configura las IPs de Vercel (esto cambia dinámicamente)
+
+4. **Verifica las credenciales de la base de datos**:
+   - Confirma que el usuario y contraseña sean correctos
+   - Verifica que la base de datos especificada exista
+   - Asegúrate de que `DB_ENCRYPT=true` esté configurado para Azure SQL
+
+5. **Timeouts de conexión**:
+   - Si tu base de datos tarda mucho en responder, aumenta los timeouts en `database.module.ts`
+   - Verifica que la base de datos esté activa y funcionando
+
 ### Error: Cannot find module '@nestjs/core'
 **Solución**: Asegúrate de que `node_modules` esté instalado. Vercel lo instala automáticamente durante el build.
 
@@ -390,12 +431,25 @@ Después de desplegar en Vercel, verifica:
 - Verifica que el firewall de Azure SQL permita conexiones desde Azure services
 - Confirma que `DB_ENCRYPT=true` está configurado
 - Verifica las credenciales de la base de datos
+- Aumenta los valores de `connectionTimeout` y `requestTimeout` en `database.module.ts`
 
 ### Error: JWT secret no configurado
-**Solución**: Configura `JWT_SECRET` en las variables de entorno de Vercel.
+**Solución**: Configura `JWT_SECRET` en las variables de entorno de Vercel con un valor seguro y único.
+
+### Error: pnpm-lock.yaml desactualizado
+**Solución**: 
+- Ejecuta `pnpm install` localmente para regenerar el lockfile
+- Haz commit y push del `pnpm-lock.yaml` actualizado
 
 ### Documentación no carga en Vercel
 **Solución**: Verifica que la URL en Swagger use `VERCEL_URL` correctamente. El archivo `api/index.ts` ya está configurado para esto.
+
+### La aplicación funciona localmente pero falla en Vercel
+**Posibles causas**:
+1. Variables de entorno no configuradas en Vercel
+2. Base de datos no accesible desde Vercel
+3. Problemas con rutas de archivos (usar rutas relativas)
+4. Timeouts en funciones serverless (máximo 30 segundos en plan Hobby)
 
 ## 📝 Notas Adicionales
 
