@@ -14,10 +14,14 @@ async function bootstrap(): Promise<express.Express> {
 
   try {
     console.log('🚀 Inicializando aplicación NestJS...');
-    const expressApp = express();
-    const app = await NestFactory.create(AppModule, new ExpressAdapter(expressApp), {
+    // Crear la aplicación NestJS - dejar que ExpressAdapter maneje Express internamente
+    const app = await NestFactory.create(AppModule, {
       logger: ['error', 'warn', 'log'],
+      bodyParser: true,
     });
+    
+    // Obtener la instancia de Express después de la creación
+    const expressApp = app.getHttpAdapter().getInstance() as express.Express;
 
     // Configurar zona horaria para Colombia (UTC-5)
     process.env.TZ = 'America/Bogota';
