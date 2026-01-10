@@ -2,7 +2,6 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { apiReference } from '@scalar/express-api-reference';
 
 // Configurar zona horaria para Colombia (UTC-5)
 process.env.TZ = 'America/Bogota';
@@ -64,11 +63,10 @@ async function bootstrap() {
     res.json(document);
   });
 
-  // Scalar como vista principal en la raíz
+  // Montar Scalar en /docs para no interceptar otros endpoints (POST, etc.)
   // Usar import dinámico para evitar problemas de tipos
   const { apiReference } = await import('@scalar/express-api-reference');
   
-  // Montar Scalar en /docs para no interceptar otros endpoints (POST, etc.)
   app.use(
     '/docs',
     apiReference({
@@ -80,9 +78,6 @@ async function bootstrap() {
       withDefaultFonts: true,
     } as any),
   );
-
-  // Redirigir la raíz a /docs (solo GET) para no afectar POST/PUT
-  app.getHttpAdapter().get('/', (req, res) => res.redirect('/docs'));
 
   // Swagger UI disponible en /swagger
   SwaggerModule.setup('swagger', app, document);
