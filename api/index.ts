@@ -136,11 +136,7 @@ async function bootstrap(): Promise<express.Express> {
       });
     }
 
-    // Registrar la redirección de / a /docs DESPUÉS de configurar todas las rutas
-    // Usar el adapter de NestJS para que funcione correctamente
-    app.getHttpAdapter().get('/', (req, res) => {
-      res.redirect(302, '/docs');
-    });
+    // NO registrar la redirección aquí porque NestJS lo manejará a través del controlador
     
     console.log('✅ Aplicación NestJS inicializada correctamente');
     console.log('✅ Rutas de documentación configuradas: /docs, /swagger, /swagger-json');
