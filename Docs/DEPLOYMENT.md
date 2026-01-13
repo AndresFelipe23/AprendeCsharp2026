@@ -24,8 +24,8 @@ npm install -g pm2
 ### 1.2 Crear estructura de directorios
 
 ```bash
-mkdir -p /cloudclusters/lenguaje_backend/logs
-cd /cloudclusters/lenguaje_backend
+mkdir -p /cloudclusters/AprendeCsharp2026/logs
+cd /cloudclusters/AprendeCsharp2026
 ```
 
 ### 1.3 Clonar o subir el código
@@ -39,11 +39,11 @@ git clone <tu-repositorio> .
 
 ### 2.1 Crear archivo .env
 
-Crea un archivo `.env` en `/cloudclusters/lenguaje_backend/` con el siguiente contenido:
+Crea un archivo `.env` en `/cloudclusters/AprendeCsharp2026/` con el siguiente contenido:
 
 **Opción 1: Usando `vi` (editor de texto en terminal)**
 ```bash
-cd /cloudclusters/lenguaje_backend
+cd /cloudclusters/AprendeCsharp2026
 vi .env
 ```
 
@@ -51,7 +51,7 @@ Presiona `i` para entrar en modo inserción, pega el contenido, luego presiona `
 
 **Opción 2: Usando `cat` con redirección**
 ```bash
-cat > /cloudclusters/lenguaje_backend/.env << 'EOF'
+cat > /cloudclusters/AprendeCsharp2026/.env << 'EOF'
 # Configuración de Base de Datos SQL Server
 DB_HOST=localhost
 DB_PORT=1433
@@ -73,7 +73,7 @@ EOF
 
 **Opción 3: Ver contenido existente con `cat`**
 ```bash
-cat /cloudclusters/lenguaje_backend/.env
+cat /cloudclusters/AprendeCsharp2026/.env
 ```
 
 **⚠️ IMPORTANTE:** 
@@ -84,7 +84,7 @@ cat /cloudclusters/lenguaje_backend/.env
 ## Paso 3: Instalar Dependencias y Compilar
 
 ```bash
-cd /cloudclusters/lenguaje_backend
+cd /cloudclusters/AprendeCsharp2026
 npm install
 npm run build
 ```
@@ -98,7 +98,7 @@ Esto generará la carpeta `dist/` con el código compilado.
 Edita el archivo `ecosystem.config.js` y ajusta las rutas según tu servidor:
 
 ```javascript
-cwd: '/cloudclusters/lenguaje_backend', // Ajusta esta ruta
+cwd: '/cloudclusters/AprendeCsharp2026', // Ajusta esta ruta
 ```
 
 ### 4.2 Iniciar la aplicación con PM2
@@ -291,7 +291,7 @@ pm2 monit
 Cuando necesites actualizar el código:
 
 ```bash
-cd /cloudclusters/lenguaje_backend
+cd /cloudclusters/AprendeCsharp2026
 git pull  # O sube los nuevos archivos
 npm install
 npm run build
@@ -379,7 +379,7 @@ cat /etc/nginx/sites-available/aprendecsharp.site
 
 ```bash
 # Editar ecosystem.config.js
-vi /cloudclusters/lenguaje_backend/ecosystem.config.js
+vi /cloudclusters/AprendeCsharp2026/ecosystem.config.js
 
 # Editar configuración de Nginx
 vi /etc/nginx/sites-available/aprendecsharp.site

@@ -6,7 +6,7 @@ module.exports = {
     {
       name: 'lenguaje-csharp-api',
       script: 'dist/main.js',
-      cwd: '/cloudclusters/lenguaje_backend', // Ajusta esta ruta según tu servidor
+      cwd: '/cloudclusters/AprendeCsharp2026', // Ruta del servidor
       instances: 2, // Usar 2 instancias para balanceo de carga (o 'max' para usar todos los CPUs)
       exec_mode: 'cluster', // Modo cluster para aprovechar múltiples CPUs
       env: {
@@ -32,8 +32,8 @@ module.exports = {
         // No las definas aquí por seguridad
       },
       // Archivos de logs
-      error_file: '/cloudclusters/lenguaje_backend/logs/pm2-error.log',
-      out_file: '/cloudclusters/lenguaje_backend/logs/pm2-out.log',
+      error_file: '/cloudclusters/AprendeCsharp2026/logs/pm2-error.log',
+      out_file: '/cloudclusters/AprendeCsharp2026/logs/pm2-out.log',
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       merge_logs: true,
       // Configuración de reinicio automático
@@ -58,7 +58,7 @@ module.exports = {
       host: 'aprendecsharp.site', // Tu dominio
       ref: 'origin/main',
       repo: 'git@github.com:tu-usuario/lenguaje-backend.git', // Ajusta tu repositorio
-      path: '/cloudclusters/lenguaje_backend',
+      path: '/cloudclusters/AprendeCsharp2026',
       'pre-deploy-local': '',
       'post-deploy': 'npm install && npm run build && pm2 reload ecosystem.config.js --env production',
       'pre-setup': 'mkdir -p logs',
