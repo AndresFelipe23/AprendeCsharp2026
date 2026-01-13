@@ -13,16 +13,8 @@ module.exports = {
         NODE_ENV: 'development',
         PORT: 3000,
         TZ: 'America/Bogota',
-        // Variables de base de datos - ajusta según tu configuración
-        DB_HOST: 'localhost',
-        DB_PORT: '1433',
-        DB_USERNAME: 'sa',
-        DB_PASSWORD: '', // Se recomienda usar archivo .env en lugar de aquí
-        DB_DATABASE: 'LenguajeCsharp',
-        DB_ENCRYPT: 'false',
-        // Variables JWT
-        JWT_SECRET: '', // Se recomienda usar archivo .env
-        JWT_EXPIRES_IN: '7d',
+        // Las variables de base de datos y JWT deben venir del archivo .env
+        // No las definas aquí para que el .env tenga prioridad
       },
       env_production: {
         NODE_ENV: 'production',
