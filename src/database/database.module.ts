@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { resolve } from 'path';
 import databaseConfig from '../config/database.config';
 import jwtConfig from '../config/jwt.config';
 
@@ -9,7 +10,7 @@ import jwtConfig from '../config/jwt.config';
     ConfigModule.forRoot({
       load: [databaseConfig, jwtConfig],
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: resolve(process.cwd(), '.env'),
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -27,6 +28,10 @@ import jwtConfig from '../config/jwt.config';
         const logging = configService.get<boolean>('database.logging') ?? (nodeEnv === 'development');
         
         console.log('📊 Configuración de Base de Datos:');
+        console.log(`   Host: ${host}`);
+        console.log(`   Port: ${port}`);
+        console.log(`   Username: ${username}`);
+        console.log(`   Database: ${database}`);
         console.log(`   Synchronize: ${synchronize}`);
         console.log(`   Logging: ${logging}`);
         console.log(`   NODE_ENV: ${nodeEnv}`);
