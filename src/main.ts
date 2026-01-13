@@ -96,20 +96,30 @@ async function bootstrap() {
   });
 
   // Montar Scalar en /docs para no interceptar otros endpoints (POST, etc.)
-  // Usar import dinámico para evitar problemas de tipos
-  const { apiReference } = await import('@scalar/express-api-reference');
-  
-  app.use(
-    '/docs',
-    apiReference({
-      theme: 'default',
-      layout: 'modern',
-      spec: {
-        url: `${baseUrl}/swagger-json`,
-      },
-      withDefaultFonts: true,
-    } as any),
-  );
+  // Deshabilitado en producción debido a problemas con módulos ES Module
+  if (!isProduction) {
+    try {
+      const { apiReference } = await import('@scalar/express-api-reference');
+      
+      app.use(
+        '/docs',
+        apiReference({
+          theme: 'default',
+          layout: 'modern',
+          spec: {
+            url: `${baseUrl}/swagger-json`,
+          },
+          withDefaultFonts: true,
+        } as any),
+      );
+    } catch (error) {
+      console.warn('⚠️  No se pudo cargar Scalar, usando Swagger UI en /docs');
+      SwaggerModule.setup('docs', app, document);
+    }
+  } else {
+    // En producción, usar Swagger UI en /docs
+    SwaggerModule.setup('docs', app, document);
+  }
 
   // Swagger UI disponible en /swagger
   SwaggerModule.setup('swagger', app, document);
@@ -119,7 +129,9 @@ async function bootstrap() {
 
   const serverUrl = isProduction ? baseUrl : `http://${host}:${port}`;
   console.log(`🚀 Aplicación corriendo en: ${serverUrl}`);
-  console.log(`📚 Scalar disponible en: ${serverUrl}/docs`);
+  if (!isProduction) {
+    console.log(`📚 Scalar disponible en: ${serverUrl}/docs`);
+  }
   console.log(`📖 Swagger UI disponible en: ${serverUrl}/swagger`);
   console.log(`🌍 Entorno: ${isProduction ? 'Producción' : 'Desarrollo'}`);
 }
