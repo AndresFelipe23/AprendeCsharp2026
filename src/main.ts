@@ -9,9 +9,18 @@ process.env.TZ = 'America/Bogota';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Habilitar CORS para que Scalar pueda hacer peticiones
+  // Configurar CORS según el entorno
+  const isProduction = process.env.NODE_ENV === 'production';
+  const allowedOrigins = isProduction
+    ? [
+        'https://aprendecsharp.site',
+        'https://www.aprendecsharp.site',
+        // Agrega aquí otros dominios permitidos si es necesario
+      ]
+    : true; // Permitir todos los orígenes en desarrollo
+
   app.enableCors({
-    origin: true, // Permitir todos los orígenes en desarrollo
+    origin: allowedOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -48,11 +57,19 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
 
   const port = process.env.PORT ?? 3000;
-  const baseUrl = `http://localhost:${port}`;
+  const host = isProduction ? '0.0.0.0' : 'localhost';
+  
+  // Configurar URL base según el entorno
+  const baseUrl = isProduction
+    ? 'https://aprendecsharp.site'
+    : `http://localhost:${port}`;
 
   // Asegurar que el documento tenga el servidor correcto
   if (!document.servers || document.servers.length === 0) {
-    document.servers = [{ url: baseUrl, description: 'Servidor de desarrollo' }];
+    document.servers = [{ 
+      url: baseUrl, 
+      description: isProduction ? 'Servidor de producción' : 'Servidor de desarrollo' 
+    }];
   } else {
     document.servers[0].url = baseUrl;
   }
@@ -81,10 +98,14 @@ async function bootstrap() {
 
   // Swagger UI disponible en /swagger
   SwaggerModule.setup('swagger', app, document);
-  await app.listen(port);
+  
+  // Escuchar en 0.0.0.0 en producción para permitir conexiones externas a través de Nginx
+  await app.listen(port, host);
 
-  console.log(`🚀 Aplicación corriendo en: http://localhost:${port}`);
-  console.log(`📚 Scalar disponible en: http://localhost:${port}`);
-  console.log(`📖 Swagger UI disponible en: http://localhost:${port}/swagger`);
+  const serverUrl = isProduction ? baseUrl : `http://${host}:${port}`;
+  console.log(`🚀 Aplicación corriendo en: ${serverUrl}`);
+  console.log(`📚 Scalar disponible en: ${serverUrl}/docs`);
+  console.log(`📖 Swagger UI disponible en: ${serverUrl}/swagger`);
+  console.log(`🌍 Entorno: ${isProduction ? 'Producción' : 'Desarrollo'}`);
 }
 bootstrap();
