@@ -2,6 +2,20 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { config } from 'dotenv';
+import { resolve } from 'path';
+
+// Cargar variables de entorno desde .env
+// Usar ruta absoluta para asegurar que se encuentre el archivo
+const envPath = resolve(process.cwd(), '.env');
+config({ path: envPath });
+
+// Log para verificar que se cargó (solo en desarrollo)
+if (process.env.NODE_ENV !== 'production') {
+  console.log('📁 Archivo .env cargado desde:', envPath);
+  console.log('🔍 DB_HOST:', process.env.DB_HOST || 'NO DEFINIDO');
+  console.log('🔍 DB_PORT:', process.env.DB_PORT || 'NO DEFINIDO');
+}
 
 // Configurar zona horaria para Colombia (UTC-5)
 process.env.TZ = 'America/Bogota';
