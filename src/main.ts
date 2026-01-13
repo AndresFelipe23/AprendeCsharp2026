@@ -112,20 +112,28 @@ async function bootstrap() {
           withDefaultFonts: true,
         } as any),
       );
+      console.log('✅ Scalar configurado en /docs');
     } catch (error) {
       console.warn('⚠️  No se pudo cargar Scalar, usando Swagger UI en /docs');
       SwaggerModule.setup('docs', app, document);
+      console.log('✅ Swagger UI configurado en /docs (fallback)');
     }
   } else {
     // En producción, usar Swagger UI en /docs
+    console.log('📝 Configurando Swagger UI en /docs para producción...');
     SwaggerModule.setup('docs', app, document);
+    console.log('✅ Swagger UI configurado en /docs');
   }
 
   // Swagger UI disponible en /swagger
+  console.log('📝 Configurando Swagger UI en /swagger...');
   SwaggerModule.setup('swagger', app, document);
+  console.log('✅ Swagger UI configurado en /swagger');
   
   // Escuchar en 0.0.0.0 en producción para permitir conexiones externas a través de Nginx
+  console.log(`🔌 Iniciando servidor en ${host}:${port}...`);
   await app.listen(port, host);
+  console.log(`✅ Servidor iniciado correctamente en ${host}:${port}`);
 
   const serverUrl = isProduction ? baseUrl : `http://${host}:${port}`;
   console.log(`🚀 Aplicación corriendo en: ${serverUrl}`);
