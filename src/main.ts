@@ -10,12 +10,13 @@ import { resolve } from 'path';
 const envPath = resolve(process.cwd(), '.env');
 config({ path: envPath });
 
-// Log para verificar que se cargó (solo en desarrollo)
-if (process.env.NODE_ENV !== 'production') {
-  console.log('📁 Archivo .env cargado desde:', envPath);
-  console.log('🔍 DB_HOST:', process.env.DB_HOST || 'NO DEFINIDO');
-  console.log('🔍 DB_PORT:', process.env.DB_PORT || 'NO DEFINIDO');
-}
+// Log para verificar que se cargó (también en producción para debug)
+console.log('📁 Archivo .env cargado desde:', envPath);
+console.log('🔍 DB_HOST:', process.env.DB_HOST || 'NO DEFINIDO');
+console.log('🔍 DB_PORT:', process.env.DB_PORT || 'NO DEFINIDO');
+console.log('🔍 DB_USERNAME:', process.env.DB_USERNAME || 'NO DEFINIDO');
+console.log('🔍 DB_DATABASE:', process.env.DB_DATABASE || 'NO DEFINIDO');
+console.log('🔍 NODE_ENV:', process.env.NODE_ENV || 'NO DEFINIDO');
 
 // Configurar zona horaria para Colombia (UTC-5)
 process.env.TZ = 'America/Bogota';
