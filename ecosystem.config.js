@@ -5,7 +5,7 @@ module.exports = {
   apps: [
     {
       name: 'lenguaje-csharp-api',
-      script: 'dist/main.js',
+      script: 'dist/src/main.js', // Ajusta según la estructura de compilación
       cwd: '/cloudclusters/AprendeCsharp2026', // Ruta del servidor
       instances: 2, // Usar 2 instancias para balanceo de carga (o 'max' para usar todos los CPUs)
       exec_mode: 'cluster', // Modo cluster para aprovechar múltiples CPUs
