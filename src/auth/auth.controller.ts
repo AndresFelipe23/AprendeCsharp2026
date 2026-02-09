@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, Put, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, Put, Get, UseGuards } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -65,6 +65,25 @@ export class AuthController {
   })
   async login(@Body() loginDto: LoginDto): Promise<AuthResponseDto> {
     return this.authService.login(loginDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('profile')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Obtener perfil de usuario',
+    description: 'Obtiene la información del perfil del usuario autenticado',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Perfil obtenido exitosamente',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'No autorizado',
+  })
+  async getProfile(@GetUser('usuarioId') userId: number) {
+    return this.authService.getProfile(userId);
   }
 
   @UseGuards(JwtAuthGuard)

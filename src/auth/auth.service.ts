@@ -154,6 +154,25 @@ export class AuthService {
     };
   }
 
+  async getProfile(userId: number) {
+    const usuario = await this.usuarioRepository.findOne({
+      where: { UsuarioId: userId },
+    });
+
+    if (!usuario) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    return {
+      usuarioId: usuario.UsuarioId,
+      nombreUsuario: usuario.NombreUsuario,
+      email: usuario.Email,
+      nombreCompleto: usuario.NombreCompleto,
+      puntosTotales: usuario.PuntosTotales,
+      nivel: usuario.Nivel,
+    };
+  }
+
   async validateUser(userId: number): Promise<Usuario | null> {
     const usuario = await this.usuarioRepository.findOne({
       where: { UsuarioId: userId },

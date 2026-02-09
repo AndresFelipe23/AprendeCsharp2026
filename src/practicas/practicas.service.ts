@@ -586,11 +586,14 @@ export class PracticasService {
       }
     }
 
+    // Si ya estaba completado correctamente, retornar 0 puntos aunque sea correcto
+    const puntosFinales = esPrimeraVezCorrecto ? puntosObtenidos : 0;
+
     return {
       EsCorrecta: esCorrecta,
       Mensaje: mensaje,
       Explicacion: explicacion,
-      PuntosObtenidos: puntosObtenidos,
+      PuntosObtenidos: puntosFinales,
     };
   }
 }

@@ -193,6 +193,32 @@ export class ProgresoService {
     }
   }
 
+  async obtenerPracticasCompletadas(
+    usuarioId: number,
+  ): Promise<number[]> {
+    if (!usuarioId || isNaN(usuarioId)) {
+      console.warn('obtenerPracticasCompletadas: usuarioId inválido:', usuarioId);
+      return [];
+    }
+
+    try {
+      const progresos = await this.progresoPracticaRepository.find({
+        where: {
+          UsuarioId: usuarioId,
+          Completada: true,
+        },
+        select: ['PracticaId'],
+      });
+
+      const practicaIds = progresos.map((p) => p.PracticaId).filter((id) => id != null);
+      console.log(`obtenerPracticasCompletadas: Usuario ${usuarioId} tiene ${practicaIds.length} prácticas completadas:`, practicaIds);
+      return practicaIds;
+    } catch (error) {
+      console.error('Error al obtener prácticas completadas:', error);
+      return [];
+    }
+  }
+
   async obtenerEstadisticasUsuario(
     usuarioId: number,
   ): Promise<EstadisticasUsuarioDto> {

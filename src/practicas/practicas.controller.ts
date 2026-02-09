@@ -8,6 +8,8 @@ import {
   Param,
   Query,
   ParseIntPipe,
+  HttpCode,
+  HttpStatus,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -209,6 +211,7 @@ export class PracticasController {
   }
 
   @Post(':id/validar')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Validar respuesta de una práctica',
     description:

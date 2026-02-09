@@ -35,7 +35,7 @@ export class LeccionesService {
   async findOne(id: number): Promise<Leccion> {
     const leccion = await this.leccionRepository.findOne({
       where: { LeccionId: id },
-      relations: ['Curso'],
+      relations: ['Curso', 'Practicas'],
     });
 
     if (!leccion) {

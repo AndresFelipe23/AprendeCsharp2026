@@ -250,6 +250,46 @@ export class ProgresoController {
     return this.progresoService.obtenerProgresoCursos(usuarioId);
   }
 
+  @Get('practicas/completadas')
+  @ApiOperation({
+    summary: 'Obtener prácticas completadas',
+    description: 'Obtiene una lista de IDs de prácticas completadas por el usuario autenticado',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de prácticas completadas obtenida exitosamente',
+    schema: {
+      type: 'array',
+      items: {
+        type: 'number',
+      },
+      example: [1, 2, 3],
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'No autorizado',
+  })
+  async obtenerPracticasCompletadas(
+    @GetUser() user: any,
+  ): Promise<number[]> {
+    const usuarioId = user?.usuarioId || user?.sub;
+    
+    if (!usuarioId) {
+      console.warn('obtenerPracticasCompletadas: usuario no encontrado, retornando array vacío');
+      return [];
+    }
+    
+    const userId = typeof usuarioId === 'number' ? usuarioId : Number(usuarioId);
+    
+    if (isNaN(userId) || userId <= 0) {
+      console.warn('obtenerPracticasCompletadas: usuarioId inválido:', userId);
+      return [];
+    }
+    
+    return this.progresoService.obtenerPracticasCompletadas(userId);
+  }
+
   @Get('practicas/:practicaId')
   @ApiOperation({
     summary: 'Obtener progreso de una práctica',
