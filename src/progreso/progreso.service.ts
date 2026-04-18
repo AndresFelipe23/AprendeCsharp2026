@@ -48,6 +48,11 @@ export class ProgresoService {
     return Math.floor(puntosTotales / 100) + 1;
   }
 
+  /** Columna `bit` en SQL Server puede verse como boolean o 0/1 según el driver. */
+  private esProgresoCompletada(val: unknown): boolean {
+    return val === true || val === 1;
+  }
+
   /**
    * Actualiza los puntos y nivel del usuario
    * @param usuarioId ID del usuario
@@ -167,6 +172,110 @@ export class ProgresoService {
     });
   }
 
+  /**
+   * Lección para “continuar”: según la última FechaUltimoAcceso; si esa ya está
+   * completada, la primera posterior del mismo curso que aún no lo esté.
+   */
+  async obtenerSugerenciaContinuarLeccion(usuarioId: number): Promise<{
+    leccionId: number;
+    cursoId: number;
+    titulo: string;
+    cursoNombre: string;
+    rutaNombre: string;
+  } | null> {
+    if (!usuarioId || isNaN(usuarioId)) {
+      return null;
+    }
+
+    try {
+      const anchorRow = await this.progresoLeccionRepository
+        .createQueryBuilder('p')
+        .leftJoinAndSelect('p.Leccion', 'l')
+        .leftJoinAndSelect('l.Curso', 'c')
+        .leftJoinAndSelect('c.Ruta', 'r')
+        .where('p.UsuarioId = :uid', { uid: usuarioId })
+        .orderBy('p.FechaUltimoAcceso', 'DESC')
+        .addOrderBy('p.ProgresoLeccionId', 'DESC')
+        .limit(1)
+        .getOne();
+
+      if (!anchorRow?.Leccion) {
+        return null;
+      }
+      const anchorLeccion = anchorRow.Leccion;
+      const curso = anchorLeccion.Curso;
+      if (!curso) {
+        return null;
+      }
+
+      const cursoId = curso.CursoId;
+
+      const anchorHecha = this.esProgresoCompletada(anchorRow.Completada);
+      if (!anchorHecha) {
+        return {
+          leccionId: anchorLeccion.LeccionId,
+          cursoId,
+          titulo: anchorLeccion.Titulo,
+          cursoNombre: curso.Nombre,
+          rutaNombre: curso.Ruta?.Nombre ?? '',
+        };
+      }
+
+      const lecciones = await this.leccionRepository.find({
+        where: { CursoId: cursoId, Activo: true },
+        order: { Orden: 'ASC' },
+      });
+
+      if (lecciones.length === 0) {
+        return null;
+      }
+
+      const anchorIdx = lecciones.findIndex(
+        (l) => l.LeccionId === anchorLeccion.LeccionId,
+      );
+
+      const startIdx =
+        anchorIdx >= 0
+          ? Math.min(anchorIdx + 1, lecciones.length)
+          : 0;
+
+      const leccionIds = lecciones.map((l) => l.LeccionId);
+      const progresos = leccionIds.length
+        ? await this.progresoLeccionRepository.find({
+            where: {
+              UsuarioId: usuarioId,
+              LeccionId: In(leccionIds),
+            },
+            select: ['LeccionId', 'Completada'],
+          })
+        : [];
+
+      const completadas = new Set(
+        progresos
+          .filter((p) => this.esProgresoCompletada(p.Completada))
+          .map((p) => p.LeccionId),
+      );
+
+      for (let i = startIdx; i < lecciones.length; i++) {
+        const lec = lecciones[i];
+        if (!completadas.has(lec.LeccionId)) {
+          return {
+            leccionId: lec.LeccionId,
+            cursoId,
+            titulo: lec.Titulo,
+            cursoNombre: curso.Nombre,
+            rutaNombre: curso.Ruta?.Nombre ?? '',
+          };
+        }
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Error en obtenerSugerenciaContinuarLeccion:', error);
+      return null;
+    }
+  }
+
   async obtenerLeccionesCompletadas(
     usuarioId: number,
   ): Promise<number[]> {
@@ -189,6 +298,37 @@ export class ProgresoService {
       return leccionIds;
     } catch (error) {
       console.error('Error al obtener lecciones completadas:', error);
+      return [];
+    }
+  }
+
+  /** IDs de lecciones activas del curso que el usuario tiene como Completada. */
+  async obtenerLeccionesCompletadasPorCurso(
+    usuarioId: number,
+    cursoId: number,
+  ): Promise<number[]> {
+    if (!usuarioId || isNaN(usuarioId) || !cursoId || isNaN(cursoId)) {
+      return [];
+    }
+    try {
+      const lecciones = await this.leccionRepository.find({
+        where: { CursoId: cursoId, Activo: true },
+        select: ['LeccionId'],
+      });
+      const idsCurso = lecciones.map((l) => l.LeccionId);
+      if (idsCurso.length === 0) return [];
+
+      const rows = await this.progresoLeccionRepository.find({
+        where: {
+          UsuarioId: usuarioId,
+          Completada: true,
+          LeccionId: In(idsCurso),
+        },
+        select: ['LeccionId'],
+      });
+      return rows.map((r) => r.LeccionId);
+    } catch (error) {
+      console.error('Error al obtener lecciones completadas por curso:', error);
       return [];
     }
   }
@@ -324,15 +464,19 @@ export class ProgresoService {
       });
 
       const leccionesIds = lecciones.map((l) => l.LeccionId);
-      const leccionesCompletadas = leccionesIds.length > 0
-        ? await this.progresoLeccionRepository.count({
-            where: {
-              UsuarioId: usuarioId,
-              Completada: true,
-              LeccionId: In(leccionesIds),
-            },
-          })
-        : 0;
+      const completadasRows =
+        leccionesIds.length > 0
+          ? await this.progresoLeccionRepository.find({
+              where: {
+                UsuarioId: usuarioId,
+                Completada: true,
+                LeccionId: In(leccionesIds),
+              },
+              select: ['LeccionId'],
+            })
+          : [];
+      const leccionesCompletadas = completadasRows.length;
+      const leccionesCompletadasIds = completadasRows.map((r) => r.LeccionId);
 
       const totalLecciones = lecciones.length;
       // TODO: Agregar conteo de prácticas cuando se implementen
@@ -351,6 +495,7 @@ export class ProgresoService {
         rutaNombre: curso.Ruta?.Nombre || '',
         porcentajeCompletado: Math.round(porcentajeLecciones * 100) / 100,
         leccionesCompletadas,
+        leccionesCompletadasIds,
         totalLecciones,
         practicasCompletadas,
         totalPracticas,
@@ -386,6 +531,7 @@ export class ProgresoService {
         retosCompletados,
         progresoRutasData,
         progresoCursosData,
+        continuarLeccion,
       ] = await Promise.all([
         // Estadísticas del usuario
         this.usuarioRepository.findOne({
@@ -411,6 +557,8 @@ export class ProgresoService {
         
         // Progreso de cursos (query optimizada)
         this.obtenerProgresoCursos(usuarioId),
+
+        this.obtenerSugerenciaContinuarLeccion(usuarioId),
       ]);
 
       // Obtener retos completados del resultado
@@ -427,6 +575,7 @@ export class ProgresoService {
         },
         progresoRutas: progresoRutasData || [],
         progresoCursos: progresoCursosData || [],
+        continuarLeccion: continuarLeccion ?? null,
       };
     } catch (error) {
       console.error('Error al obtener progreso completo:', error);

@@ -38,6 +38,13 @@ export class ProgresoCursoDto {
   leccionesCompletadas: number;
 
   @ApiProperty({
+    description: 'IDs de lecciones de este curso marcadas como completadas',
+    type: [Number],
+    example: [12, 15],
+  })
+  leccionesCompletadasIds: number[];
+
+  @ApiProperty({
     description: 'Total de lecciones',
     example: 7,
   })

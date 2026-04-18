@@ -434,15 +434,31 @@ export class PracticasService {
 
               // Buscar patrones de declaración de variable
               // tipo nombre = valor (con o sin espacios extra)
-              // Soporta: int edad = 25, string nombre="María", double precio=99.99
-              const patronDeclaracion = /^(int|string|double|float|bool|char|byte|short|long|decimal|var)\s+\w+\s*=\s*.+/i;
-              return patronDeclaracion.test(linea);
+              // Soporta: int edad = 25, int? edad = null, const int Dias = 7, etc.
+              const patronDeclaracion =
+                /^(const\s+)?(int|string|double|float|bool|char|byte|short|long|decimal|var)\??\s+\w+\s*=\s*.+/i;
+              // Asignación compuesta: x += 1; texto += "!"; (lección operadores de asignación)
+              const patronAsignacionCompuesta =
+                /^\w+\s*(\+=|-=|\*=|\/=|%=)\s*.+/;
+              // Incremento/decremento como sentencia: n++; --k; (lección ++ y --)
+              const patronIncDecSufijo = /^\w+\s*(\+\+|--)\s*$/;
+              const patronIncDecPrefijo = /^(\+\+|--)\s*\w+\s*$/;
+              return (
+                patronDeclaracion.test(linea) ||
+                patronAsignacionCompuesta.test(linea) ||
+                patronIncDecSufijo.test(linea) ||
+                patronIncDecPrefijo.test(linea)
+              );
             })
             .map((declaracion) => {
-              // Normalizar: quitar espacios extra, normalizar alrededor de =
+              // Normalizar espacios; el = de +=, -=, etc. no debe separarse (evita "a + = 3")
               return declaracion
-                .replace(/\s+/g, ' ') // Múltiples espacios a uno
-                .replace(/\s*=\s*/g, ' = ') // Normalizar alrededor del =
+                .replace(/\s+/g, ' ')
+                .replace(/(?<![+\-*\/%])\s*=\s*/g, ' = ')
+                .replace(/(\w)\s+(\+\+|--)\s*$/g, '$1$2')
+                .replace(/^(\+\+|--)\s+(\w)$/g, '$1$2')
+                .replace(/(\w)\s+(\+\+|--)\b/g, '$1$2')
+                .replace(/\b(\+\+|--)\s+(\w)/g, '$1$2')
                 .trim();
             })
             .filter((d) => d.length > 0);
@@ -462,9 +478,13 @@ export class PracticasService {
         const normalizarParaComparacion = (decl: string): string => {
           return decl
             .toLowerCase()
-            .replace(/\s+/g, ' ') // Normalizar espacios múltiples
-            .replace(/\s*=\s*/g, ' = ') // Normalizar espacios alrededor de =
-            .replace(/["']/g, '"') // Normalizar comillas simples a dobles
+            .replace(/\s+/g, ' ')
+            .replace(/(?<![+\-*\/%])\s*=\s*/g, ' = ')
+            .replace(/(\w)\s+(\+\+|--)\s*$/g, '$1$2')
+            .replace(/^(\+\+|--)\s+(\w)$/g, '$1$2')
+            .replace(/(\w)\s+(\+\+|--)\b/g, '$1$2')
+            .replace(/\b(\+\+|--)\s+(\w)/g, '$1$2')
+            .replace(/["']/g, '"')
             .trim();
         };
 

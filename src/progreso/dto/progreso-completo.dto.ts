@@ -1,7 +1,8 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EstadisticasUsuarioDto } from './estadisticas-usuario.dto';
 import { ProgresoRutaDto } from './progreso-ruta.dto';
 import { ProgresoCursoDto } from './progreso-curso.dto';
+import { ContinuarLeccionDto } from './continuar-leccion.dto';
 
 export class ProgresoCompletoDto {
   @ApiProperty({
@@ -21,5 +22,13 @@ export class ProgresoCompletoDto {
     type: [ProgresoCursoDto],
   })
   progresoCursos: ProgresoCursoDto[];
+
+  @ApiPropertyOptional({
+    description:
+      'Sugerencia para continuar (última lección visitada o siguiente pendiente en ese curso)',
+    type: ContinuarLeccionDto,
+    nullable: true,
+  })
+  continuarLeccion?: ContinuarLeccionDto | null;
 }
 

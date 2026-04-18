@@ -22,6 +22,7 @@ import { EstadisticasUsuarioDto } from './dto/estadisticas-usuario.dto';
 import { ProgresoRutaDto } from './dto/progreso-ruta.dto';
 import { ProgresoCursoDto } from './dto/progreso-curso.dto';
 import { ProgresoCompletoDto } from './dto/progreso-completo.dto';
+import { ContinuarLeccionDto } from './dto/continuar-leccion.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 
@@ -92,6 +93,101 @@ export class ProgresoController {
     return this.progresoService.actualizarUltimoAcceso(usuarioId, leccionId);
   }
 
+  /** Debe ir ANTES de `lecciones/:leccionId` para que "completadas" no se tome como ID. */
+  @Get('lecciones/completadas')
+  @ApiOperation({
+    summary: 'Obtener lecciones completadas',
+    description: 'Obtiene una lista de IDs de lecciones completadas por el usuario autenticado',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de lecciones completadas obtenida exitosamente',
+    schema: {
+      type: 'array',
+      items: {
+        type: 'number',
+      },
+      example: [1, 2, 3],
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'No autorizado',
+  })
+  async obtenerLeccionesCompletadas(
+    @GetUser() user: any,
+  ): Promise<number[]> {
+    const usuarioId = user?.usuarioId || user?.sub;
+
+    if (!usuarioId) {
+      console.warn('obtenerLeccionesCompletadas: usuario no encontrado, retornando array vacío');
+      return [];
+    }
+
+    const userId = typeof usuarioId === 'number' ? usuarioId : Number(usuarioId);
+
+    if (isNaN(userId) || userId <= 0) {
+      console.warn('obtenerLeccionesCompletadas: usuarioId inválido:', userId);
+      return [];
+    }
+
+    return this.progresoService.obtenerLeccionesCompletadas(userId);
+  }
+
+  /** Antes de `lecciones/:leccionId`. */
+  @Get('lecciones/continuar')
+  @ApiOperation({
+    summary: 'Sugerencia para continuar',
+    description:
+      'Basada en la última lección visitada (FechaUltimoAcceso). Si ya está completada, devuelve la siguiente pendiente del mismo curso.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Sugerencia o cuerpo null si no aplica',
+    type: ContinuarLeccionDto,
+  })
+  async obtenerSugerenciaContinuar(@GetUser() user: any) {
+    const usuarioId = user?.usuarioId || user?.sub;
+    if (!usuarioId) {
+      return null;
+    }
+    const userId = typeof usuarioId === 'number' ? usuarioId : Number(usuarioId);
+    if (isNaN(userId) || userId <= 0) {
+      return null;
+    }
+    return this.progresoService.obtenerSugerenciaContinuarLeccion(userId);
+  }
+
+  @Get('cursos/:cursoId/lecciones-completadas')
+  @ApiOperation({
+    summary: 'IDs de lecciones completadas en un curso',
+    description:
+      'Lista los IDs de lecciones activas del curso que el usuario ya marcó como completadas',
+  })
+  @ApiParam({ name: 'cursoId', type: 'number', description: 'ID del curso' })
+  @ApiResponse({
+    status: 200,
+    description: 'IDs obtenidos',
+    schema: { type: 'array', items: { type: 'number' } },
+  })
+  async obtenerLeccionesCompletadasPorCurso(
+    @Param('cursoId', ParseIntPipe) cursoId: number,
+    @GetUser() user: any,
+  ): Promise<number[]> {
+    const usuarioId = user?.usuarioId || user?.sub;
+    if (!usuarioId) {
+      return [];
+    }
+    const userId = typeof usuarioId === 'number' ? usuarioId : Number(usuarioId);
+    if (isNaN(userId) || userId <= 0) {
+      return [];
+    }
+    return this.progresoService.obtenerLeccionesCompletadasPorCurso(
+      userId,
+      cursoId,
+    );
+  }
+
   @Get('lecciones/:leccionId')
   @ApiOperation({
     summary: 'Obtener progreso de una lección',
@@ -129,49 +225,6 @@ export class ProgresoController {
     }
 
     return progreso;
-  }
-
-  @Get('lecciones/completadas')
-  @ApiOperation({
-    summary: 'Obtener lecciones completadas',
-    description: 'Obtiene una lista de IDs de lecciones completadas por el usuario autenticado',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Lista de lecciones completadas obtenida exitosamente',
-    schema: {
-      type: 'array',
-      items: {
-        type: 'number',
-      },
-      example: [1, 2, 3],
-    },
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'No autorizado',
-  })
-  async obtenerLeccionesCompletadas(
-    @GetUser() user: any,
-  ): Promise<number[]> {
-    // Usar el mismo patrón que otros métodos
-    const usuarioId = user?.usuarioId || user?.sub;
-    
-    // Validación básica sin lanzar error 400, simplemente retornar array vacío
-    if (!usuarioId) {
-      console.warn('obtenerLeccionesCompletadas: usuario no encontrado, retornando array vacío');
-      return [];
-    }
-    
-    // Convertir a número si es necesario
-    const userId = typeof usuarioId === 'number' ? usuarioId : Number(usuarioId);
-    
-    if (isNaN(userId) || userId <= 0) {
-      console.warn('obtenerLeccionesCompletadas: usuarioId inválido:', userId);
-      return [];
-    }
-    
-    return this.progresoService.obtenerLeccionesCompletadas(userId);
   }
 
   @Get('estadisticas')

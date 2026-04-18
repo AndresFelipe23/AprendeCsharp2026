@@ -24,12 +24,40 @@ import { RutasService } from './rutas.service';
 import { Ruta } from '../entities/ruta.entity';
 import { CreateRutaDto } from './dto/create-ruta.dto';
 import { UpdateRutaDto } from './dto/update-ruta.dto';
+import { CatalogoRutaDto } from './dto/catalogo.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('rutas')
 @Controller('rutas')
 export class RutasController {
   constructor(private readonly rutasService: RutasService) {}
+
+  /** Debe ir antes de @Get(':id') para que "catalogo" no se interprete como id. */
+  @Get('catalogo')
+  @ApiOperation({
+    summary: 'Catálogo completo para inicio',
+    description:
+      'Devuelve rutas con cursos y lecciones anidadas en una sola respuesta. ' +
+      'Por defecto solo registros activos. Las lecciones no incluyen contenido largo (ContenidoBreve, CodigoEjemplo).',
+  })
+  @ApiQuery({
+    name: 'includeInactive',
+    required: false,
+    type: Boolean,
+    description: 'Incluir rutas, cursos y lecciones inactivos',
+    example: false,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Catálogo obtenido exitosamente',
+    type: [CatalogoRutaDto],
+  })
+  async findCatalogo(
+    @Query('includeInactive') includeInactive?: string,
+  ): Promise<CatalogoRutaDto[]> {
+    const include = includeInactive === 'true';
+    return this.rutasService.findCatalogo(include);
+  }
 
   @Get()
   @ApiOperation({
