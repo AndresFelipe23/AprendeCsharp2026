@@ -8,6 +8,7 @@ import { CursosModule } from './cursos/cursos.module';
 import { LeccionesModule } from './lecciones/lecciones.module';
 import { ProgresoModule } from './progreso/progreso.module';
 import { PracticasModule } from './practicas/practicas.module';
+import { LegalModule } from './legal/legal.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { PracticasModule } from './practicas/practicas.module';
     LeccionesModule,
     ProgresoModule,
     PracticasModule,
+    LegalModule,
   ],
   controllers: [AppController],
   providers: [AppService],
