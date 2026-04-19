@@ -4,6 +4,8 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { config } from 'dotenv';
 import { resolve } from 'path';
+import type { Express } from 'express';
+import { registerLegalRoutes } from './legal/register-legal-routes';
 
 // Cargar variables de entorno desde .env
 // Usar ruta absoluta para asegurar que se encuentre el archivo
@@ -23,6 +25,8 @@ process.env.TZ = 'America/Bogota';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  registerLegalRoutes(app.getHttpAdapter().getInstance() as Express);
 
   // Configurar CORS según el entorno
   const isProduction = process.env.NODE_ENV === 'production';

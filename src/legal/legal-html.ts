@@ -1,27 +1,7 @@
-import { Controller, Get, Header } from '@nestjs/common';
-import { ApiExcludeController } from '@nestjs/swagger';
-
 /**
- * Páginas HTML públicas para cumplimiento de Google Play Console
- * (política de privacidad y eliminación de cuenta).
+ * HTML estático para páginas legales (Google Play Console).
+ * Lo usa register-legal-routes.ts desde main.ts (VPS + Nginx).
  */
-@ApiExcludeController()
-@Controller()
-export class LegalController {
-  @Get(['politica-de-privacidad', 'privacy-policy'])
-  @Header('Content-Type', 'text/html; charset=utf-8')
-  @Header('Cache-Control', 'public, max-age=3600')
-  politicaDePrivacidad(): string {
-    return privacyPolicyHtml();
-  }
-
-  @Get(['eliminacion-de-cuenta', 'account-deletion'])
-  @Header('Content-Type', 'text/html; charset=utf-8')
-  @Header('Cache-Control', 'public, max-age=3600')
-  eliminacionDeCuenta(): string {
-    return accountDeletionHtml();
-  }
-}
 
 function escapeHtml(text: string): string {
   return text
@@ -31,7 +11,7 @@ function escapeHtml(text: string): string {
     .replace(/"/g, '&quot;');
 }
 
-function privacyPolicyHtml(): string {
+export function buildPrivacyPolicyHtml(): string {
   const contacto = escapeHtml(
     process.env.PRIVACY_CONTACT_EMAIL ?? 'afesdev2025@gmail.com',
   );
@@ -99,7 +79,7 @@ function privacyPolicyHtml(): string {
 </html>`;
 }
 
-function accountDeletionHtml(): string {
+export function buildAccountDeletionHtml(): string {
   const contacto = escapeHtml(
     process.env.PRIVACY_CONTACT_EMAIL ?? 'afesdev2025@gmail.com',
   );

@@ -24,7 +24,7 @@ export class AppController {
     description: 'API funcionando correctamente',
     schema: {
       type: 'string',
-      example: 'Hello World!'
+      example: 'API Aprende C# funcionando correctamente'
     }
   })
   getHello(): string {

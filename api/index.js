@@ -47,7 +47,7 @@ async function bootstrap() {
         };
         const config = new swagger_1.DocumentBuilder()
             .setTitle('Lenguaje C# API')
-            .setDescription('API para la aplicación de aprendizaje del lenguaje C#')
+            .setDescription('API para la aplicación de aprendizaje del lenguaje C#, creada por AfesDev2025, para la aplicación Aprende C#')
             .setVersion('1.0')
             .addTag('rutas', 'Endpoints relacionados con rutas de aprendizaje')
             .addTag('cursos', 'Endpoints relacionados con cursos')
