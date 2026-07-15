@@ -80,10 +80,9 @@ async function bootstrap(): Promise<express.Express> {
       .addServer('/', 'Producción') // URL relativa funciona en cualquier entorno
       .build();
 
-    console.log('✅ Inicializando módulos de NestJS...');
-    await app.init();
-
-    // Crear el documento de Swagger DESPUÉS de inicializar
+    // Crear el documento de Swagger ANTES de app.init().
+    // createDocument solo lee metadata de los controladores (ya disponible
+    // tras NestFactory.create) y no requiere que la app esté inicializada.
     swaggerDocument = SwaggerModule.createDocument(app, config);
 
     // Registrar /swagger-json DESPUÉS de crear el documento
@@ -125,6 +124,12 @@ async function bootstrap(): Promise<express.Express> {
     SwaggerModule.setup('swagger', app, swaggerDocument);
     console.log('✅ Swagger UI configurado en /swagger');
     console.log('✅ Rutas registradas: /docs, /swagger, /swagger-json');
+
+    // Inicializar NestJS AL FINAL. Sus rutas (y su handler 404) se registran
+    // después de las rutas de Express (/docs, /swagger-json, /swagger), por lo
+    // que estas quedan primero en el stack y tienen prioridad.
+    console.log('✅ Inicializando módulos de NestJS...');
+    await app.init();
 
     // NO registrar la redirección aquí porque NestJS lo manejará a través del controlador
     
